@@ -161,14 +161,24 @@ func (s *CodeEvaluationService) evaluateJava(code string, testCases []TestCase) 
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Extract class name from code
+	// Extract class name from code - sanitize to prevent path traversal
 	className := "Solution"
 	if strings.Contains(code, "class ") {
 		parts := strings.Split(code, "class ")
 		if len(parts) > 1 {
 			parts2 := strings.Fields(parts[1])
 			if len(parts2) > 0 {
-				className = parts2[0]
+				// Sanitize class name: only allow alphanumeric characters
+				candidate := parts2[0]
+				sanitized := ""
+				for _, ch := range candidate {
+					if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_' {
+						sanitized += string(ch)
+					}
+				}
+				if len(sanitized) > 0 {
+					className = sanitized
+				}
 			}
 		}
 	}
