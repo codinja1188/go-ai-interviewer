@@ -22,7 +22,6 @@ type Handler struct {
 	evaluationService *services.CodeEvaluationService
 	scoringService    *services.ScoringService
 	interviewService  *services.InterviewService
-	templates         *template.Template
 }
 
 // NewHandler creates a new Handler
@@ -34,7 +33,21 @@ func NewHandler(db *sql.DB) *Handler {
 		evaluationService: services.NewCodeEvaluationService(30 * time.Second),
 		scoringService:    services.NewScoringService(),
 		interviewService:  services.NewInterviewService(db),
-		templates:         template.Must(template.ParseGlob("web/templates/*.html")),
+	}
+}
+
+// renderTemplate renders a specific template
+func (h *Handler) renderTemplate(w http.ResponseWriter, templateName string, data interface{}) {
+	tmpl, err := template.ParseFiles("web/templates/base.html", "web/templates/"+templateName)
+	if err != nil {
+		log.Printf("Template parse error: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
 }
 
@@ -53,13 +66,13 @@ func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.templates.ExecuteTemplate(w, "home.html", data)
+	h.renderTemplate(w, "home.html", data)
 }
 
 // Login handles the login page
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		h.templates.ExecuteTemplate(w, "login.html", nil)
+		h.renderTemplate(w, "login.html", nil)
 		return
 	}
 
@@ -69,7 +82,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.authService.AuthenticateUser(username, password)
 	if err != nil {
-		h.templates.ExecuteTemplate(w, "login.html", map[string]interface{}{
+		h.renderTemplate(w, "login.html", map[string]interface{}{
 			"Error": "Invalid username or password",
 		})
 		return
@@ -88,7 +101,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // Register handles user registration
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		h.templates.ExecuteTemplate(w, "register.html", nil)
+		h.renderTemplate(w, "register.html", nil)
 		return
 	}
 
@@ -103,7 +116,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.authService.CreateUser(username, password, role)
 	if err != nil {
-		h.templates.ExecuteTemplate(w, "register.html", map[string]interface{}{
+		h.renderTemplate(w, "register.html", map[string]interface{}{
 			"Error": "Failed to create user. Username may already exist.",
 		})
 		return
@@ -136,12 +149,13 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Username":   username,
-		"Role":       role,
-		"Interviews": interviews,
+		"Username":        username,
+		"Role":            role,
+		"Interviews":      interviews,
+		"IsAuthenticated": true,
 	}
 
-	h.templates.ExecuteTemplate(w, "dashboard.html", data)
+	h.renderTemplate(w, "dashboard.html", data)
 }
 
 // Questions handles the questions page
@@ -171,13 +185,14 @@ func (h *Handler) Questions(w http.ResponseWriter, r *http.Request) {
 	username, _ := session.Values["username"].(string)
 
 	data := map[string]interface{}{
-		"Username":   username,
-		"Questions":  questions,
-		"Category":   category,
-		"Difficulty": difficulty,
+		"Username":        username,
+		"Questions":       questions,
+		"Category":        category,
+		"Difficulty":      difficulty,
+		"IsAuthenticated": true,
 	}
 
-	h.templates.ExecuteTemplate(w, "questions.html", data)
+	h.renderTemplate(w, "questions.html", data)
 }
 
 // StartInterview handles starting a new interview
@@ -225,12 +240,13 @@ func (h *Handler) Interview(w http.ResponseWriter, r *http.Request) {
 	question := questions[0]
 
 	data := map[string]interface{}{
-		"Username":    username,
-		"InterviewID": interviewID,
-		"Question":    question,
+		"Username":        username,
+		"InterviewID":     interviewID,
+		"Question":        question,
+		"IsAuthenticated": true,
 	}
 
-	h.templates.ExecuteTemplate(w, "interview.html", data)
+	h.renderTemplate(w, "interview.html", data)
 }
 
 // SubmitCode handles code submission
@@ -352,9 +368,10 @@ func (h *Handler) Transcript(w http.ResponseWriter, r *http.Request) {
 	username, _ := session.Values["username"].(string)
 
 	data := map[string]interface{}{
-		"Username":   username,
-		"Transcript": transcript,
+		"Username":        username,
+		"Transcript":      transcript,
+		"IsAuthenticated": true,
 	}
 
-	h.templates.ExecuteTemplate(w, "transcript.html", data)
+	h.renderTemplate(w, "transcript.html", data)
 }
