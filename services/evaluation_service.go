@@ -87,9 +87,6 @@ func (ces *CodeEvaluationService) executeCodeInSandbox(code string, language mod
 	ctx, cancel := context.WithTimeout(context.Background(), ces.maxExecutionTime)
 	defer cancel()
 
-	var cmd *exec.Cmd
-	var codeFile string
-
 	switch language {
 	case models.LanguageGo:
 		// For Go, we'll use a simpler approach - evaluate the code
@@ -105,12 +102,6 @@ func (ces *CodeEvaluationService) executeCodeInSandbox(code string, language mod
 	default:
 		return "", fmt.Errorf("unsupported language: %s", language)
 	}
-
-	if cmd != nil && codeFile != "" {
-		// Cleanup would happen here
-	}
-
-	return "", nil
 }
 
 // executeGoCode executes Go code (simplified - in production use Docker)
