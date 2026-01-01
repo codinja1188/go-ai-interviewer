@@ -1,0 +1,55 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+<h2>Dashboard</h2>
+
+<div class="card">
+    <h3>Welcome, {{.Username}}!</h3>
+    <p>Role: <span class="badge badge-beginner">{{.Role}}</span></p>
+    
+    <form method="POST" action="/start-interview" style="margin-top: 1rem;">
+        <button type="submit" class="btn btn-success">Start New Interview</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Your Interviews</h3>
+    
+    {{if .Interviews}}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Score</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Interviews}}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td>
+                        {{if eq .Status "completed"}}
+                            <span class="badge badge-completed">Completed</span>
+                        {{else}}
+                            <span class="badge badge-in-progress">In Progress</span>
+                        {{end}}
+                    </td>
+                    <td>{{printf "%.2f" .TotalScore}}/100</td>
+                    <td>{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+                    <td>
+                        {{if eq .Status "completed"}}
+                            <a href="/transcript/{{.ID}}" class="btn" style="padding: 0.5rem 1rem;">View Transcript</a>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    {{else}}
+        <p>No interviews yet. Start your first interview!</p>
+    {{end}}
+</div>
+{{end}}

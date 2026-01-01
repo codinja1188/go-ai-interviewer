@@ -1,0 +1,43 @@
+{{template "base.html" .}}
+
+{{define "content"}}
+<h2>Interview Transcript</h2>
+
+<div class="card">
+    <h3>Interview Summary</h3>
+    <p><strong>Interview ID:</strong> {{.Transcript.InterviewID}}</p>
+    <p><strong>Total Score:</strong> {{printf "%.2f" .Transcript.TotalScore}}/100</p>
+    <p><strong>Overall Feedback:</strong> {{.Transcript.Feedback}}</p>
+</div>
+
+{{range $index, $response := .Transcript.Responses}}
+{{$question := index $.Transcript.Questions $index}}
+<div class="card">
+    <h3>{{$question.Title}}</h3>
+    
+    <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+        <p><strong>Description:</strong> {{$question.Description}}</p>
+        <p><strong>Category:</strong> {{$question.Category}}</p>
+        <p><strong>Difficulty:</strong> {{$question.Difficulty}}</p>
+    </div>
+    
+    <h4>Your Solution ({{$response.Language}})</h4>
+    <pre style="background: #2c3e50; color: #ecf0f1; padding: 1rem; border-radius: 4px; overflow-x: auto;">{{$response.Code}}</pre>
+    
+    <h4>Score Breakdown</h4>
+    <p><strong>Total:</strong> {{printf "%.2f" $response.Score}}/100</p>
+    <p><strong>Correctness:</strong> {{printf "%.2f" $response.Correctness}}/40</p>
+    <p><strong>Efficiency:</strong> {{printf "%.2f" $response.Efficiency}}/30</p>
+    <p><strong>Code Quality:</strong> {{printf "%.2f" $response.CodeQuality}}/30</p>
+    
+    <h4>Feedback</h4>
+    <p>{{$response.Feedback}}</p>
+    
+    <p><strong>Submitted:</strong> {{$response.SubmittedAt.Format "2006-01-02 15:04:05"}}</p>
+</div>
+{{end}}
+
+<div class="card">
+    <a href="/dashboard" class="btn">Back to Dashboard</a>
+</div>
+{{end}}
